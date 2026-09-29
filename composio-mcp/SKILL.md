@@ -7,6 +7,38 @@ description: MCP gateway routing rules for Composio. Handles dynamic tool search
 
 Headless MCP routing rules for Composio. This skill assumes no local terminal, no Composio CLI, and no shell access — all Composio interaction happens exclusively through the MCP gateway.
 
+## 0. Endpoint & Auth — Connect vs Project Keys
+
+Two ways to reach Composio over MCP. Prefer **Connect** for ease of setup.
+
+**Composio Connect (recommended).** Hosted MCP server at `https://connect.composio.dev/mcp`
+(streamable HTTP). Exposes the `COMPOSIO_*` meta-tools used below. Authenticate with a
+**consumer key** (`ck_…`) in the `x-consumer-api-key` header — **not** your project API
+key (`ak_…`); the Connect endpoint does not accept project keys. Get the consumer key in
+the Composio dashboard under **For You → Connect Settings → Sessions & API Key**.
+
+```json
+{
+  "mcpServers": {
+    "composio": {
+      "type": "http",
+      "url": "https://connect.composio.dev/mcp",
+      "headers": { "x-consumer-api-key": "ck_…" }
+    }
+  }
+}
+```
+
+The first time the agent needs an app, Composio returns an OAuth link: the user approves
+it in the browser and the connection persists across sessions. If the MCP host itself
+authenticates via OAuth (the client holds the grant), no API key is needed at all and
+the agent never sees credential headers.
+
+**Project MCP server (scoped alternative).**
+`https://backend.composio.dev/v3/mcp/<server_id>?user_id=<user_id>` with header
+`x-api-key: ak_…`. Use when you need per-toolkit servers or explicit user scoping.
+Create the server in the Composio dashboard (or SDK), then connect with the generated URL.
+
 ## When to Apply
 
 - The harness (TrueForge) must access external apps (Gmail, Slack, GitHub, Notion, etc.) via Composio's MCP server.
